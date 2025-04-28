@@ -1,0 +1,12 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "cognito-react"
+resolve_s3 = true
+s3_prefix = "cognito-react"
+region = "eu-west-3"
+profile = "default"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "Env=\"dev\" S3BucketName=\"mouss-todo-dev\" CognitoUserPoolName=\"majestic-userpool\" CognitoWebClientName=\"majestic-webclient\""
+image_repositories = []

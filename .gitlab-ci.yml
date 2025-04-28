@@ -1,0 +1,32 @@
+image: node:18
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+  - node_modules/
+  - .next/cache/
+
+stages:
+- install
+- build
+
+install_dependencies:
+  stage: install
+  script:
+  - npm ci
+  artifacts:
+    paths:
+    - node_modules/
+    expire_in: 1 hour
+
+build_app:
+  stage: build
+  script:
+  - npm run build
+  artifacts:
+    paths:
+    - .next/
+    - out/
+    expire_in: 1 hour
+  needs:
+  - install_dependencies
