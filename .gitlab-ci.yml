@@ -1,32 +1,28 @@
-image: node:18
-
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-  - node_modules/
-  - .next/cache/
+image: docker:latest
 
 stages:
-- install
 - build
+- deploy
 
-install_dependencies:
-  stage: install
-  script:
-  - npm ci
-  artifacts:
-    paths:
-    - node_modules/
-    expire_in: 1 hour
+variables:
+  DOCKER_DRIVER: overlay2
 
-build_app:
+before_script:
+- apk add --no-cache curl python3 py3-pip
+- pip install awscli
+
+build:
   stage: build
   script:
-  - npm run build
-  artifacts:
-    paths:
-    - .next/
-    - out/
-    expire_in: 1 hour
-  needs:
-  - install_dependencies
+  - docker build -t my-nextjs-app .
+
+deploy:
+  stage: deploy
+  script:
+  - docker tag my-nextjs-app:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/my-nextjs-repo:latest
+  - $(aws ecr get-login --no-include-email --region <region>)
+  - docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/my-nextjs-repo:latest
+  - aws elasticbeanstalk create-application-version --application-name my-nextjs-app --version-label v$CI_COMMIT_REF_NAME --source-bundle S3Bucket=my-nextjs-bucket,S3Key=my-nextjs-app-v$CI_COMMIT_REF_NAME.zip
+  - aws elasticbeanstalk update-environment --environment-name my-nextjs-env --version-label v$CI_COMMIT_REF_NAME
+  only:
+  - main
